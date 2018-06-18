@@ -8,7 +8,7 @@
                  ((and (has-value? c) (has-value? a))
                   (set-value! b (op2 (get-value c) (get-value a)) adder))
                  ((and (has-value? c) (has-value? b))
-                  (set-value! a (op3 (get-value c) (get-value b)) adder)))))))
+                  (set-value! a (op2 (get-value c) (get-value b)) adder)))))))
 
 (define (adder a1 a2 sum)
   (let ((adder (make-constraint a1 a2 sum + -)))
