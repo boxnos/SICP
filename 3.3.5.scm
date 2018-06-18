@@ -1,22 +1,48 @@
 #lang racket
 
+; SICP 3.3.5  Propagation of Constraints 
+; http://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-22.html#%_sec_3.3.5
+
+;; constrains
 (define (make-constraint a b c op1 op2)
-  (lambda (request)
+  (define (constraint request)
     (cond ((eq? request 'I-have-a-value)
            (cond ((and (has-value? a) (has-value? b))
                   (set-value! c (op1 (get-value a) (get-value b)) adder))
                  ((and (has-value? c) (has-value? a))
                   (set-value! b (op2 (get-value c) (get-value a)) adder))
                  ((and (has-value? c) (has-value? b))
-                  (set-value! a (op2 (get-value c) (get-value b)) adder)))))))
+                  (set-value! a (op2 (get-value c) (get-value b)) adder))))))
+  (connect a constraint)
+  (connect b constraint)
+  (connect c constraint)
+  constraint)
 
 (define (adder a1 a2 sum)
-  (let ((adder (make-constraint a1 a2 sum + -)))
-    (connect a1 adder)
-    (connect a2 adder)
-    (connect sum adder)
-    adder))
+  (make-constraint a1 a2 sum + -))
 
+(define (multiplier m1 m2 product)
+  (make-constraint m1 m2 product * /))
+
+(define (constant value connector)
+  (define (const request)
+    (error "constant : Unknown request" request))
+  (connect connector const)
+  (set-value! connector value const)
+  const)
+
+(define (probe name connector)
+  (define (print-probe value)
+    (display (list "Probe : " name " = " value))
+    (newline))
+  (define (probe request)
+    (cond ((eq? request 'I-have-a-value)
+           ((lambda () (print-probe (get-value connector)))))
+          (else "probe : Unknown request" request)))
+  (connect connector probe)
+  probe)
+
+;; connector
 (define (make-connector)
   (let ((value #f)
         (informant #f)
@@ -42,6 +68,7 @@
             (else (error "connector : Unknown request" request))))
     connector))
 
+;; TODO: refactor to map
 (define (for-each-exept exception procedure list)
   (define (loop items)
     (cond ((null? items) 'done)
@@ -66,55 +93,30 @@
 (define (get-value connector)
   (connector 'value))
 
-(define (constant value connector)
-  (define (const request)
-    (error "constant : Unknown request" request))
-  (connect connector const)
-  (set-value! connector value const)
-  const)
-
-(define (probe name connector)
-  (define (print-probe value)
-    (display (list "Probe : " name " = " value))
-    (newline))
-  (define (probe request)
-    (cond ((eq? request 'I-have-a-value)
-           ((lambda () (print-probe (get-value connector)))))
-          (else "probe : Unknown request" request)))
-  (connect connector probe)
-  probe)
-
+;; test
 (define (celsius-fahrenheit-converter c f)
   (let ((u (make-connector))
         (v (make-connector))
         (w (make-connector))
+        (x (make-connector))
         (y (make-connector)))
+    (multiplier c w u)
+    (multiplier v x u)
+    (adder v y f)
     (constant 9 w)
+    (constant 5 x)
+    (constant 32 y)
     'ok))
 
 (define C (make-connector))
 (define F (make-connector))
 (celsius-fahrenheit-converter C F)
+(probe "Celisius temp" C)
+(probe "Fahrenheit temp" F)
 
-;; test
-(C 'has-value?) ; called has-value?
-((C 'set-value!) 9 'hoge)
-(C 'value)
-
-(define (adder-test a b)
-  (let ((c (make-connector)))
-    (adder a b c)
-    (constant 4 c)
-    'ok))
-(define A (make-connector))
-(define B (make-connector))
-(adder-test A B)
-(probe "A" A)
-(probe "B" B)
-(set-value! A 1 'user)
-; (Probe :  A  =  1)
-; (Probe :  B  =  3)
-
+(set-value! C 25 'user)
+; (Probe :  Fahrenheit temp  =  25)
+; (Probe :  Celisius temp  =  25)
 ;; # English memo
 ;; - contradiction : 矛盾
 ;; - constraint : 制約
