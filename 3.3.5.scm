@@ -5,17 +5,24 @@
 
 ;; constrains
 (define (make-constraint a b c op1 op2)
+  (define (process-new-value)
+    (cond ((and (has-value? a) (has-value? b))
+                  (set-value! c (op1 (get-value a) (get-value b)) constraint))
+                 ((and (has-value? c) (has-value? a))
+                  (set-value! b (op2 (get-value c) (get-value a)) constraint))
+                 ((and (has-value? c) (has-value? b))
+                  (set-value! a (op2 (get-value c) (get-value b)) constraint))))
   (define (constraint request)
     (cond ((eq? request 'I-have-a-value)
-           (cond ((and (has-value? a) (has-value? b))
-                  (set-value! c (op1 (get-value a) (get-value b)) adder))
-                 ((and (has-value? c) (has-value? a))
-                  (set-value! b (op2 (get-value c) (get-value a)) adder))
-                 ((and (has-value? c) (has-value? b))
-                  (set-value! a (op2 (get-value c) (get-value b)) adder))))))
-  (connect a constraint)
-  (connect b constraint)
-  (connect c constraint)
+           (process-new-value))
+          ((eq? request 'I-lost-my-value)
+            (begin
+              (for-each (lambda (connector) (forget-value! connector constraint))
+                        (list a b c))
+              (process-new-value)))
+          (else (error "make-constraint : Unknown request" request))))
+  (for-each (lambda (connector) (connect connector constraint))
+            (list a b c))
   constraint)
 
 (define (adder a1 a2 sum)
@@ -38,6 +45,8 @@
   (define (probe request)
     (cond ((eq? request 'I-have-a-value)
            ((lambda () (print-probe (get-value connector)))))
+          ((eq? request 'I-lost-my-value)
+           ((lambda () (print-probe "?"))))
           (else "probe : Unknown request" request)))
   (connect connector probe)
   probe)
@@ -63,6 +72,12 @@
                      ((not (eq? value new-value))
                       (error "connector : Contradiction" (list value new-value)))
                      (else 'ignored))))
+            ((eq? request 'forget-value!)
+             (lambda (retractor)
+               (if (eq? retractor informant)
+                   (begin (set! informant #f)
+                          (for-each-exept retractor inform-about-no-value constrains))
+                   'ignored)))
             ((eq? request 'has-value?) (if informant #t #f))
             ((eq? request 'value) value)
             (else (error "connector : Unknown request" request))))
@@ -84,11 +99,17 @@
 (define (set-value! connector new-value informant)
   ((connector 'set-value!) new-value informant))
 
+(define (forget-value! connector informant)
+  ((connector 'forget-value!) informant))
+
 (define (has-value? connector)
   (connector 'has-value?))
 
 (define (inform-about-value constraint)
   (constraint 'I-have-a-value))
+
+(define (inform-about-no-value constraint)
+  (constraint 'I-lost-my-value))
 
 (define (get-value connector)
   (connector 'value))
@@ -113,12 +134,21 @@
 (celsius-fahrenheit-converter C F)
 (probe "Celisius temp" C)
 (probe "Fahrenheit temp" F)
-
 (set-value! C 25 'user)
-; (Probe :  Fahrenheit temp  =  25)
 ; (Probe :  Celisius temp  =  25)
+; (Probe :  Fahrenheit temp  =  77)
+
+(forget-value! C 'user)
+; (Probe :  Celisius temp  =  ?)
+; (Probe :  Fahrenheit temp  =  ?)
+
+(set-value! F 212 'user)
+; (Probe :  Fahrenheit temp  =  212)
+; (Probe :  Celisius temp  =  100)
+
 ;; # English memo
 ;; - contradiction : 矛盾
 ;; - constraint : 制約
 ;; - prove : 証明
 ;; - probe : 探索する
+;; - retractor : 〔手術に用いる〕開創器、開創鉤
