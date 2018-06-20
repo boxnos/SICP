@@ -152,3 +152,26 @@
 ;; - prove : 証明
 ;; - probe : 探索する
 ;; - retractor : 〔手術に用いる〕開創器、開創鉤
+
+;; ex 3.33
+(define (averager a b c)
+  (let ((u (make-connector))
+        (v (make-connector))
+        (w (make-connector)))
+    (adder a b u)
+    (multiplier w c u)
+    (constant 2 w)
+    'ok))
+
+(define a (make-connector))
+(define b (make-connector))
+(define c (make-connector))
+(averager a b c)
+(probe "a" a)
+(probe "b" b)
+(probe "c" c)
+(set-value! a 70 'user)
+; (Probe :  a  =  70)
+(set-value! b 30 'user)
+; (Probe :  b  =  30)
+; (Probe :  c  =  50)
