@@ -3,15 +3,17 @@
 ; SICP 3.3.5  Propagation of Constraints 
 ; http://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-22.html#%_sec_3.3.5
 
+(require racket/trace)
+
 ;; constrains
 (define (make-constraint a b c op1 op2)
   (define (process-new-value)
     (cond ((and (has-value? a) (has-value? b))
-                  (set-value! c (op1 (get-value a) (get-value b)) constraint))
-                 ((and (has-value? c) (has-value? a))
-                  (set-value! b (op2 (get-value c) (get-value a)) constraint))
-                 ((and (has-value? c) (has-value? b))
-                  (set-value! a (op2 (get-value c) (get-value b)) constraint))))
+           (set-value! c (op1 (get-value a) (get-value b)) constraint))
+          ((and (has-value? c) (has-value? a))
+           (set-value! b (op2 (get-value c) (get-value a)) constraint))
+          ((and (has-value? c) (has-value? b))
+           (set-value! a (op2 (get-value c) (get-value b)) constraint))))
   (define (constraint request)
     (cond ((eq? request 'I-have-a-value)
            (process-new-value))
@@ -80,18 +82,15 @@
                    'ignored)))
             ((eq? request 'has-value?) (if informant #t #f))
             ((eq? request 'value) value)
+            ((eq? request 'constrains) constrains)
             (else (error "connector : Unknown request" request))))
     connector))
 
-;; TODO: refactor to map
 (define (for-each-exept exception procedure list)
-  (define (loop items)
-    (cond ((null? items) 'done)
-          ((eq? (car items) exception) (loop (cdr items)))
-          (else
-            (procedure (car items))
-            (loop (cdr items)))))
-  (loop list))
+  (for-each (lambda (item)
+              (cond ((not (eq? item exception))
+                     (procedure item))))
+            list))
 
 (define (connect connector new-constraint)
   ((connector 'connect) new-constraint))
@@ -171,3 +170,15 @@
             `((a . ,a) (b . ,b) (c . ,c)))
   (set-value! a 70 'user)
   (set-value! b 30 'user))
+
+;; ex 3.34
+(define (squere a b)
+  (multiplier a a b))
+
+(let ((a (make-connector))
+      (b (make-connector)))
+  (for-each (lambda (a) (probe (car a) (cdr a)))
+            `((a . ,a) (b . ,b)))
+  (squere a b)
+  (set-value! b 3 'user))
+; (Probe :  b  =  3)
