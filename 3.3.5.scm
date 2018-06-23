@@ -6,32 +6,32 @@
 (require racket/trace)
 
 ;; constrains
-(define (make-constraint a b c op1 op2)
-  (define (process-new-value)
+(define (make-constraint l process-new-value)
+  (define (constraint request)
+    (cond ((eq? request 'I-have-a-value)
+           (process-new-value constraint))
+          ((eq? request 'I-lost-my-value)
+            (begin
+              (for-each (lambda (connector) (forget-value! connector constraint)) l)
+              (process-new-value constraint)))
+          (else (error "make-constraint : Unknown request" request))))
+  (for-each (lambda (connector) (connect connector constraint)) l)
+  constraint)
+
+(define (three-arguments a b c op1 op2)
+  (lambda (constraint)
     (cond ((and (has-value? a) (has-value? b))
            (set-value! c (op1 (get-value a) (get-value b)) constraint))
           ((and (has-value? c) (has-value? a))
            (set-value! b (op2 (get-value c) (get-value a)) constraint))
           ((and (has-value? c) (has-value? b))
-           (set-value! a (op2 (get-value c) (get-value b)) constraint))))
-  (define (constraint request)
-    (cond ((eq? request 'I-have-a-value)
-           (process-new-value))
-          ((eq? request 'I-lost-my-value)
-            (begin
-              (for-each (lambda (connector) (forget-value! connector constraint))
-                        (list a b c))
-              (process-new-value)))
-          (else (error "make-constraint : Unknown request" request))))
-  (for-each (lambda (connector) (connect connector constraint))
-            (list a b c))
-  constraint)
+           (set-value! a (op2 (get-value c) (get-value b)) constraint)))))
 
 (define (adder a1 a2 sum)
-  (make-constraint a1 a2 sum + -))
+  (make-constraint (list a1 a2 sum) (three-arguments a1 a2 sum + -)))
 
 (define (multiplier m1 m2 product)
-  (make-constraint m1 m2 product * /))
+  (make-constraint (list m1 m2 product) (three-arguments m1 m2 product * /)))
 
 (define (constant value connector)
   (define (const request)
@@ -181,4 +181,17 @@
             `((a . ,a) (b . ,b)))
   (squere a b)
   (set-value! b 3 'user))
+; (Probe :  b  =  3)
+
+;; ex 3.35
+(define (squere a b)
+  (make-constraint
+    (list a b)
+    (lambda (constraint)
+      (cond ((has-value? a)
+             (set-value! b (* (get-value a) (get-value a)) constraint))
+            ((has-value? b)
+             (set-value! a (sqrt (get-value b)) constraint))))))
+
+; (Probe :  a  =  1.7320508075688772)
 ; (Probe :  b  =  3)
