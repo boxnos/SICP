@@ -82,6 +82,7 @@
                    'ignored)))
             ((eq? request 'has-value?) (if informant #t #f))
             ((eq? request 'value) value)
+            ((eq? request 'informant) informant)
             ((eq? request 'constrains) constrains)
             (else (error "connector : Unknown request" request))))
     connector))
@@ -195,3 +196,21 @@
 
 ; (Probe :  a  =  1.7320508075688772)
 ; (Probe :  b  =  3)
+
+
+; ex 3.36
+(define a (make-connector))
+(define b (make-connector))
+(set-value! a 10 'user)
+
+(a 'value) ; 10
+(a 'informant) ; user
+(a 'constrains) ; ()
+
+(b 'value) ; #f
+(b 'informant) ; #f
+(b 'constrains) ; ()
+
+; set-value!とするとコネクタにvalue 10とinformantに'userを指定する。
+; for-each-exceptは、(for-each-except 'user  (制約に対して'i-have-valueと伝える手続き) '())という形で呼ばれる。
+; この手続きでinformantがuserではない制約にi-have-valueを伝えるがconstrainsが空なので何もしない
