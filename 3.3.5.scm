@@ -214,3 +214,40 @@
 ; set-value!とするとコネクタにvalue 10とinformantに'userを指定する。
 ; for-each-exceptは、(for-each-except 'user  (制約に対して'i-have-valueと伝える手続き) '())という形で呼ばれる。
 ; この手続きでinformantがuserではない制約にi-have-valueを伝えるがconstrainsが空なので何もしない
+
+; ex 3.37
+(define (make-simple-connector f)
+  (let ((z (make-connector)))
+    (f z) 
+    z))
+
+(define (c+ a b)
+  (make-simple-connector
+    (lambda (z) (adder a b z))))
+(define (c* a b)
+  (make-simple-connector
+    (lambda (z) (multiplier a b z))))
+(define (c- a b)
+  (make-simple-connector
+    (lambda (z) (adder a (c* (cv -1) b) z))))
+(define (c/ a b)
+  (make-simple-connector
+    (lambda (z) (multiplier b z a))))
+(define (cv x)
+  (make-simple-connector
+    (lambda (z) (constant x z))))
+
+(define (celsius-fahrenheit-converter x)
+  (c+ (c* (c/ (cv 9) (cv 5))
+          x)
+      (cv 32)))
+
+(define C (make-connector))
+(define F (celsius-fahrenheit-converter C))
+(probe "Celisius temp" C)
+(probe "Fahrenheit temp" F)
+(set-value! C 25 'user)
+; (Probe :  Celisius temp  =  25)
+; (Probe :  Fahrenheit temp  =  77)
+
+
