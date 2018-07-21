@@ -229,7 +229,7 @@
     (lambda (z) (multiplier a b z))))
 (define (c- a b)
   (make-simple-connector
-    (lambda (z) (adder a (c* (cv -1) b) z))))
+    (lambda (z) (adder b z a))))
 (define (c/ a b)
   (make-simple-connector
     (lambda (z) (multiplier b z a))))
