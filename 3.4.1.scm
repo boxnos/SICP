@@ -30,14 +30,6 @@
 ; (Merry Peter Paul) 40
 ; (Paul Merry Peter) 50
 ; (Merry Paul Peter) 40
-  (if (>= barance amount)
-      (begin (set! balance (- balance amount))
-             balance)
-      "Insufficient funds"))
-
-(define balance 100)
-(withdraw 25)
-(withdraw 25)
 
 ; ex 3.38 a
 (define (Peter balance)
