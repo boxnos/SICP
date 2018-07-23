@@ -105,7 +105,7 @@
       (if (eq? state 'withdraw)
           (begin
             (set! balance (action b))
-            balance)
+            b)
           balance))))
 
 (define Peter (make-person (lambda (balance) (+ balance 10))))
@@ -121,9 +121,10 @@
                    ((Merry 'withdraw) (Merry 'set)))))
 ; ((Peter (quote withdraw)) (Peter (quote set)) (Paul (quote withdraw)) (Paul (quote set)) (Merry (quote withdraw)) (Merry (quote set))) 45
 ; ((Peter (quote withdraw)) (Peter (quote set)) (Paul (quote withdraw)) (Merry (quote withdraw)) (Merry (quote set)) (Paul (quote set))) 90
-; ((Peter (quote withdraw)) (Peter (quote set)) (Paul (quote withdraw)) (Merry (quote withdraw)) (Paul (quote set)) (Merry (quote set))) 45
+; ((Peter (quote withdraw)) (Peter (quote set)) (Paul (quote withdraw)) (Merry (quote withdraw)) (Paul (quote set)) (Merry (quote set))) 55
 ; ((Peter (quote withdraw)) (Peter (quote set)) (Merry (quote withdraw)) (Merry (quote set)) (Paul (quote withdraw)) (Paul (quote set))) 35
 ; ((Peter (quote withdraw)) (Peter (quote set)) (Merry (quote withdraw)) (Paul (quote withdraw)) (Paul (quote set)) (Merry (quote set))) 55
-; ((Peter (quote withdraw)) (Peter (quote set)) (Merry (quote withdraw)) (Paul (quote withdraw)) (Merry (quote set)) (Paul (quote set))) 35
+; ((Peter (quote withdraw)) (Peter (quote set)) (Merry (quote withdraw)) (Paul (quote withdraw)) (Merry (quote set)) (Paul (quote set))) 90
 ; ((Peter (quote withdraw)) (Paul (quote withdraw)) (Paul (quote set)) (Peter (quote set)) (Merry (quote withdraw)) (Merry (quote set))) 55
+; ((Peter (quote withdraw)) (Paul (quote withdraw)) (Paul (quote set)) (Merry (quote withdraw)) (Merry (quote set)) (Peter (quote set))) 110
 ; ...
